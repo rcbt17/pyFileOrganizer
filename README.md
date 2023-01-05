@@ -11,7 +11,7 @@ To safely move the files I used the .replace function from the "os" library. Fur
 
 <h4>How to install</h4><hr>
 1. Here there are two options. You can either download the binary. It was compiled using pyinstaller and should run out of the box for any Windows device. <br><br>
-2. You can also grab this repository and start it with python. Make sure to install the requirements from <code>requirements.txt</code> file! Simply start it by running <code>python main.py</code>
+2. You can also grab this repository and start it with python. Make sure to install the requirements from <code>requirements.txt</code> file! Simply start it by running <code>python main.py</code><br>
 3. That's it! 
 
 <h4>Usage</h4><hr>
