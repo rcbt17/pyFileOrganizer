@@ -9,7 +9,7 @@ from datetime import datetime
 def display_logo():
     # Will display logo, is reused when menu needs to be reloaded.
     os.system('cls')
-    tprint("File Organizer")
+    tprint("Simple File Organizer")
     print("                            a small, but handy file organizer!")
     print("\r\n")
 
@@ -17,7 +17,7 @@ def display_logo():
 class DesktopOrganizer:
     def __init__(self):
         self.config = self.read_config_file()
-        items_to_move = []
+        # Initializing the folder path as empty, so that we can later check if user has selected a folder or pressed cancel
         self.folder_path = ""
 
     def read_config_file(self):
@@ -62,6 +62,12 @@ class DesktopOrganizer:
                 print("Sorry, you must choose a directory!")
         items_to_move = os.listdir(self.folder_path)
         total_items_to_sort = len(items_to_move)
+
+        #Creating a dictionary to help track what files were moved and what files haven't been moved
+        file_tracking = {}
+        for item in items_to_move:
+            if '.' in item:
+                file_tracking[item] = 0
         print(f"[+] File Organizer found a total of {total_items_to_sort} files and/or folders that should be sorted.")
         
         #Creating a Folder inside the "to backup" folder, called Backup - current time. It will contain all backed up files
@@ -73,29 +79,45 @@ class DesktopOrganizer:
         except Exception as e:
             print("[!] Sorry, we are unable to create a new folder on Desktop. Maybe not enough write privileges?")
             exit(e)
+        # Waiting 5 seconds so that the user has the chance to hard abort
         time.sleep(5)
+
+        #Creating the 2 extra folders that are not included within the settings.ini file ( folder for other folders and others for uncategorized files)
+
         os.mkdir(f"{self.folder_path}/Backup - {time_suffix}/folders")
         os.mkdir(f"{self.folder_path}/Backup - {time_suffix}/others")
+
+        # Parsing the Formats section from our settings.ini and checking as we parse if our files meet the criteria,
         for current in self.config["Formats"]:
             os.mkdir(f"{self.folder_path}/Backup - {time_suffix}/{current}")
             extensions_in_folder = self.config["Formats"][current].split(",")
-            for item in items_to_move:
-                was_moved = False
-                for extension in extensions_in_folder:
-                    print(extension)
+            for extension in extensions_in_folder:
+                for item in items_to_move:
                     if item.endswith(extension):
+                        # Using the replace function from "os" to be able to move files. (similar to unix "mv" function)
                         os.replace(f"{self.folder_path}/{item}", f"{self.folder_path}/Backup - {time_suffix}/{current}/{item}")
-                        items_to_move.remove(item)
-                        was_moved = True
-                if was_moved == False:
-                    os.replace(f"{self.folder_path}/{item}", f"{self.folder_path}/Backup - {time_suffix}/others/{item}")
+                        print(f"[+] Success - Moved file {item} to the folder {current}")
+                        file_tracking[item] = 1
         for item in items_to_move:
-            os.replace(f"{self.folder_path}/{item}", f"{self.folder_path}/Backup - {time_suffix}/folders/{item}")
+            # Checking if current item is a folder, if so, moved it accordingly
+            if '.' not in item:
+                os.replace(f"{self.folder_path}/{item}", f"{self.folder_path}/Backup - {time_suffix}/folders/{item}")
+                print(f"[+] Success - Moved folder {item} to the 'folders'")
+            # if it isn't a folder and it has not been tracked as already moved, it should be moved to the "others" folder.
+            elif file_tracking[item] == 0:
+                os.replace(f"{self.folder_path}/{item}", f"{self.folder_path}/Backup - {time_suffix}/others/{item}")
+                print(f"[+] Success - Moved file {item} to the folder 'others' ")
 
             
 
     def display_help_menu(self):
-        pass
+        print("[HELP] Simple file organizer is a simple, yet effective and customizable tool to help you organize your files and folders!")
+        print("[HELP] Usage is straightforward, you simply need to press [1] in the menu. It will then simply ask you to select the folder you"
+              "want organized and start the job. ")
+        print("[HELP] To further customize this software, press [2] to open the settings.ini file. There you can add your own folders and extensions."
+              "For example, if you need to put your presentation files in a new folder called School, you simply add the line \r\n"
+              "School = .ppt,pptx\r\n")
+        input("Press Enter to continue!")
 
     def start(self):
         answer = self.display_menu()
